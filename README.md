@@ -6,7 +6,7 @@
 
 > NASM 是一个绝赞的汇编器。现在让我们通过一些例子来学习 NASM。 然而这里的笔记仅仅只是蜻蜓点水般地涉及了一些皮毛,所以当你看完这个页面后,你需要查看 [官方的 NASM 文档 ](http://www.nasm.us/doc/)。
 
-![img](./assets/nasm-logo.png)
+![img](https://raw.githubusercontent.com/zhangjunlei26/NASM-Tutorial-CN/master/assets/nasm-logo.png)
 
 ## 教程范围
 
@@ -104,7 +104,7 @@ Hello, World
 
 NASM 是基于行的。大多数程序由指令后跟一个或多个部分组成。行可以具有可选标签。大多数行都有一条指令,后跟零个或多个操作数。
 
-![nasmstructure.png](./assets/nasmstructure.png)
+![nasmstructure.png](https://raw.githubusercontent.com/zhangjunlei26/NASM-Tutorial-CN/master/assets/nasmstructure.png)
 
 通常,您将代码放在的部分中,`.text`并将常量数据放在的部分中`.data`。
 
@@ -177,7 +177,7 @@ XMM0 ... XMM15
 
 研究这张照片;希望它可以帮助：
 
-![rdx.png](https://cs.lmu.edu/~ray/images/rdx.png)
+![rdx.png](https://raw.githubusercontent.com/zhangjunlei26/NASM-Tutorial-CN/master/assets/rdx.png)
 
 ### 内存操作数
 
