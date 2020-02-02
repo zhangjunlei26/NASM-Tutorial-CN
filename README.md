@@ -6,17 +6,18 @@
 
 > NASM 是一个绝赞的汇编器。现在让我们通过一些例子来学习 NASM。 然而这里的笔记仅仅只是蜻蜓点水般地涉及了一些皮毛,所以当你看完这个页面后,你需要查看 [官方的 NASM 文档 ](http://www.nasm.us/doc/)。
 
-![img](https://cs.lmu.edu/~ray/images/nasm-logo.png)
+![img](./assets/nasm-logo.png)
 
 ## 教程范围
 
-本教程将向您展示如何在 x86-64 体系结构上编写汇编语言程序。
+本教程将向您展示如何在 x86-64 体系结构上编写汇编语言程序。您将同时学会编写：
 
-您将同时编写(1)独立程序和(2)与 C 集成的程序。
+ 1. 独立运行的汇编程序
+ 2.  与 C 集成的程序
 
-我们不会太花哨了。
+> 请注意：教程会涉及Windows/MacOSX/Linux三个系统的使用方法，请确保在其中一个平台下已经安装好 nasm 和 gcc。
 
-## 您的第一个程序
+## 第一个程序
 
 在学习 nasm 之前,请确保您可以键入并运行程序。
 
@@ -29,6 +30,7 @@
 ```asm
 ; ----------------------------------------------------------------------------------------
 ; 仅使用syscall将"Hello,World"写入控制台。仅在64位Linux上运行。
+; 使用 Linux 下的 1 号系统调用来输出一条信息和 60 号系统调用来退出程序。
 ; 编译汇编代码并运行：
 ;
 ; nasm -felf64 hello.asm && ld hello.o && ./a.out
@@ -37,11 +39,15 @@
           global    _start
 
           section   .text
-_start:   mov       rax,1                  ; system call for write
-          mov       rdi,1                  ; 文件句柄1是stdout
-          mov       rsi,message            ; 要输出的字符串地址
-          mov       rdx,13                 ; 字节数
+_start:   
+         ; write(1, message, 13)
+          mov       rax,1                  ; 1 号系统调用是写操作
+          mov       rdi,1                  ; 1 号文件系统调用是标准输出stdout
+          mov       rsi,message            ; 输出字符串的地址
+          mov       rdx,13                 ; 字节数（输出字符串的长度）
           syscall                           ; 调用操作系统进行写入
+          
+          ; exit(0)
           mov       rax,60                 ; syscall退出
           xor       rdi,rdi                ; 退出代码 0
           syscall                           ; 调用操作系统退出
@@ -73,11 +79,14 @@ Hello,World
           global _start
 
           section .text
-start: mov rax,0x02000004   ; syscall
+start: 
+          ; write(1, message, 13)
+          mov rax,0x02000004   ; syscall
           mov rdi,1         ; 文件句柄1是stdout
-          mov rsi,message   ;要输出的字符串地址
+          mov rsi,message   ; 要输出的字符串地址
           mov rdx,13        ; 字节数
           syscall           ; 调用操作系统进行写入
+          ; exit(0)
           mov rax,0x02000001; syscall退出
           xor rdi,rdi       ; 退出代码0
           syscall           ; 调用操作系统退出
@@ -95,7 +104,7 @@ Hello, World
 
 NASM 是基于行的。大多数程序由指令后跟一个或多个部分组成。行可以具有可选标签。大多数行都有一条指令,后跟零个或多个操作数。
 
-![nasmstructure.png](https://cs.lmu.edu/~ray/images/nasmstructure.png)
+![nasmstructure.png](./assets/nasmstructure.png)
 
 通常,您将代码放在的部分中,`.text`并将常量数据放在的部分中`.data`。
 
@@ -106,7 +115,7 @@ NASM 是一个很棒的汇编器,但是汇编语言很复杂。您不仅需要�
 - [NASM 手册](http://www.nasm.us/doc/),非常好！
 - [英特尔处理器手册](http://www.intel.com/content/www/us/en/processors/architectures-software-developer-manuals.html)
 
-## 您的最初几个指示
+## 从掌握如下汇编指令开始
 
 有数百条指令。您无法一次全部学习它们。从这些 start:
 
@@ -339,7 +348,7 @@ $ nasm -fmacho64 triangle.asm && ld triangle.o && ./a.out
 
 仅使用 syscall 编写独立程序就已经很酷了，但很少见。我们想使用 C 库中的好东西。
 
-还记得在 C 中如何从 `main`函数"starts"执行吗？这是因为 C 库实际上在其`_start`内部具有标签！`_start`开始的代码进行了一些初始化，然后调用`main`，执行完成进行清理，然后发出 syscall 以退出。因此，您只需要编码实现`main`即可，我们可以在汇编语言中实现这一点！
+为何在 C语言程序中，看上去都是从 `main`函数开始执行？这是因为 C  library的内部有`_start`标签！`_start`开始处的代码会做一些初始化的工作，然后调用`main`函数中的代码，最后执行清理工作，最终执行60号系统调用以退出。因此，您只需要实现`main`函数即可，我们可以在汇编语言中实现这么做：
 
 如果您有 Linux,请尝试以下操作：
 
@@ -347,18 +356,18 @@ hola.asm
 
 ```asm
 ; ----------------------------------------------------------------------------------------
-; 使用C库将" Hola,mundo"写入控制台。在Linux上运行。
-;
+; 使用C库将" Hola,mundo"写入控制台。程序运行在 Linux 或者其他在 C 语言库中不使用下划线的操作系统上。
+; 如何编译执行:
 ; nasm -felf64 hola.asm && gcc hola.o && ./a.out
 ; ----------------------------------------------------------------------------------------        
 global    main
           extern    puts
 
           section   .text
-main:                                       ; 这里由C library启动代码调用
+main:                                       ; 这里被 C library初始化代码所调用
           mov       rdi, message            ; rdi中的第一个整数(或指针)参数
           call      puts                    ; puts(message)
-          ret                               ; Return from main back into C library wrapper
+          ret                               ; 由 main 函数返回 C 语言库例程 
 message:
           db        "Hola, mundo", 0        ; 注意字符串必须在C中以0结尾
 ```
@@ -405,27 +414,27 @@ Hola, mundo
 
 在 macOS 领域中,C 函数(或实际上是从一个模块导出到另一个模块的任何函数)必须以下划线作为前缀。调用堆栈必须在 16 字节边界上对齐(稍后会对此进行更多介绍)。并且在访问命名变量时,需要`rel`前缀。
 
-## 理解参数调用习俗
+## 理解参数调用约束
 
 我们怎么知道`puts`的参数放在`RDI`中？答：有多个参数调用约定。
 
-为与 C 库集成的 64 位 Linux 编写代码时,必须遵循《[AMD64 ABI 参考》中](http://www.x86-64.org/documentation/abi.pdf)说明的调用约定 。您也可以从[Wikipedia](http://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_Calling_Conventions)获得此信息 。最重要的一点是：
+当你为 C library集成的 64 位 Linux 编写代码时,必须遵循[《AMD64 ABI Reference》](http://www.x86-64.org/documentation/abi.pdf)中说明的调用约定 。您也可以从[Wikipedia](http://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_Calling_Conventions)获这些信息 。在这里列出最重要的几点：
 
-- 从左到右,传递尽可能多的参数以适合寄存器。分配寄存器的顺序为：
-  - 整数和指针：`rdi`,`rsi`,`rdx`,`rcx`,`r8`,`r9`。
-  - 浮点(单精度,双精度)：`xmm0`,`xmm1`,`xmm2`,`xmm3`,`xmm4`,`xmm5`, ` xmm6`,`xmm7`
-- 其他参数从右到左压入堆栈,并*在调用*后*由调用方删除*。
-- 推入参数后,将生成调用指令,因此当被调用函数获得控制时,返回地址为`[rsp]`,第一个内存参数为 ,依此类推`[rsp+8]`。
-- **`rsp`进行调用之前,堆栈指针必须与 16 字节边界对齐**。很好,但是进行调用的过程会将返回地址(8 个字节)压入堆栈,因此当一个函数获得控制权时,`rsp`它就不会对齐。您必须通过推入一些东西或从中减去 8 来自己腾出额外的空间`rsp`。
-- 唯一的供函数调用预留寄存器(the calle-save registers)有：`rbp`,`rbx`,`r12`,`r13`,`r14`,`r15`。其他所有函数均可通过调用函数自由更改。
-- 被调用者还应该保存 XMCSR 和 x87 的控制位，但是 x87 指令在 64 位代码中很少见，因此您不必担心这一点。
+- 传递参数时，按照从左到右的顺序，将尽可能多的参数依次保存在寄存器中。存放位置的寄存器顺序是确定的：
+  - 对于整数和指针：`rdi`,`rsi`,`rdx`,`rcx`,`r8`,`r9`。
+  - 对于浮点(float和double类型)：`xmm0`,`xmm1`,`xmm2`,`xmm3`,`xmm4`,`xmm5`, ` xmm6`,`xmm7`
+- 剩下的参数将按照从右到左的顺序压入栈中，并在调用之后 *由调用函数推出栈* 。
+- 等所有的参数传入后，会生成调用指令。所以当被调用函数得到控制权后，返回地址会被保存在 `[rsp]` 中，第一个局部变量会被保存在 `[rsp+8]` 中，以此类推。
+- **栈指针`rsp`在调用之前，必须与16 字节边界对齐处理**。当然，调用的过程中只会把一个 8 bytes 的返回地址推入栈中，所以当函数得到控制权时，`rsp` 并没有对齐。你需要向栈中压入数据或者从 `rsp` 减去 8 来使之对齐。
+- 调用函数需要预留如下寄存器(the calle-save registers)：`rbp`,`rbx`,`r12`,`r13`,`r14`,`r15`。其他的寄存器可以自由使用。
+- 被调用函数也需要保存 XMCSR 的控制位和 x87 指令集的控制字，但是 x87 指令在 64 位系统中很少见，所以您不必担心这一点。
 - 整数被返回在`rax`或`rdx:rax`,浮点值返回在`xmm0`或`xmm1:xmm0`。
 
 以上罗列的都理解了吗？什么，还没有？没关系，接下来我们再来一些示例，练习一下。
 
-这是一个说明如何保存和还原寄存器的程序：
+如下代码，展示如何保存和恢复寄存器：
 
-fib.asm
+`fib.asm`
 
 ```asm
 ; ----------------------------------------------------------------------------
@@ -493,7 +502,7 @@ $ nasm -felf64 fib.asm && gcc fib.o && ./a.out
 
 
 
-我们刚刚看到了一些新的说明：
+通过如上代码，我们学习如下指令：
 
 | `push` _x_     | 减少`rsp`操作数的大小,然后将*x*存储在`[rsp]` |
 | -------------- | -------------------------------------------- |
@@ -502,7 +511,7 @@ $ nasm -felf64 fib.asm && gcc fib.o && ./a.out
 | `call` _label_ | 按下下一条指令的地址,然后跳到标签            |
 | `ret`          | 弹出指令指针                                 |
 
-## 混合 C 和汇编语言
+##  C 和汇编语言混合调用示例
 
 该程序只是一个简单的函数,它接受三个整数参数并返回最大值。
 
@@ -530,7 +539,7 @@ maxofthree：
         ret            ; 最大值将为rax
 ```
 
-这是一个调用汇编语言功能的 C 程序。
+这是一个调用汇编语言函数的 C 程序。
 
 `callmaxofthree.c`
 
@@ -546,12 +555,12 @@ maxofthree：
 int64_t maxofthree (int64_t,int64_t,int64_t);
 
 int main(){
-    printf("％ld \ n", maxofthree(1,-4,-7));
-    printf("％ld \ n", maxofthree(2,-6,1));
-    printf("％ld \ n", maxofthree(2,3,1));
-    printf("％ld \ n", maxofthree(-2,4,3));
-    printf("％ld \ n", maxofthree(2,-6,5));
-    printf("％ld \ n", maxofthree(2,4,6));
+    printf("%ld\n", maxofthree(1, -4, -7));
+    printf("%ld\n", maxofthree(2, -6, 1));
+    printf("%ld\n", maxofthree(2, 3, 1));
+    printf("%ld\n", maxofthree(-2, 4, 3));
+    printf("%ld\n", maxofthree(2, -6, 5));
+    printf("%ld\n", maxofthree(2, 4, 6));
     return 0;
 }
 
@@ -589,13 +598,13 @@ $ nasm -felf64 maxofthree.asm && gcc callmaxofthree.c maxofthree.o && ./a.out
 
 ## 命令行参数
 
-您知道在 C 中，`main`它只是一个普通的旧函数,它有几个自己的参数：
+在 C 中，`main` 是一个古老而简单的函数，其实它自身可以附带一些参数：
 
 ```c
 int main(int argc, char ** argv)
 ```
 
-因此,您猜到了，`argc`它将以`rdi`结尾，而 `argv`(指针)将以`rsi`结尾。以下是一个遵循此规则的程序，将命令行参数简单地回显到程序,每行一个：
+因此,您猜到了，`argc`以`rdi`结尾，而 `argv`(指针)以`rsi`结尾。下面运用这一点，实现将命令行参数简单地逐行显示的程序：
 
 `echo.asm`
 
@@ -611,20 +620,20 @@ int main(int argc, char ** argv)
         section .text
 
 main:
-        push rdi      ; 保存放置使用的寄存器
+        push rdi      ; 保存 puts 函数需要用到的寄存器 
         push rsi
-        sub rsp,8     ; 调用前必须对齐堆栈
+        sub rsp,8     ; 调用函数前让栈顶对齐 
 
-        mov rdi,[rsi] ; 要显示的参数字符串
-        call puts     ; 打印它
+        mov rdi,[rsi] ; 需要输出的字符串参数 
+        call puts     ; 调用 puts 输出
 
-        add rsp,8     ; 恢复％rsp到预先对齐的值
-        pop rsi       ; 恢复已使用的寄存器
+        add rsp,8     ; 恢复％rsp到未对齐的值
+        pop rsi       ; 恢复puts用到的寄存器
         pop rdi
 
-        add rsi,8     ; 指向下一个论点
-        dec rdi       ; 倒数
-        jnz main      ; 如果还没递减到0就继续
+        add rsi,8     ; 指向下一个参数
+        dec rdi       ; 递减参数计数
+        jnz main      ; 如果未读完参数则继续 
 
         ret
 
@@ -641,18 +650,18 @@ hi there
 
 
 
-## 一个更长的例子
+## 一个更长一些的例子
 
-请注意,就 C 库而言,命令行参数始终是字符串。如果要将它们视为整数,请致电`atoi`。这是一个计算 x y 的简洁程序。
+请注意,就 C library而言, 命令行参数总是以字符串的形式传入的。如果要将参数视为整数使用，请调用`atoi`函数。下面是一个计算 $x^y$ 的函数。
 
-权力
+`power.asm`
 
 ```asm
 ; -------------------------------------------------- ---------------------------
 ; 一个用于计算x ^ y的64位命令行应用程序。
 ;
-; 语法：电源xy
-; x和y是(32位)整数
+; 语法：power x y
+; x和y均是(32位)整数
 ; -------------------------------------------------- ---------------------------
 
         global  main
@@ -662,22 +671,22 @@ hi there
 
         section .text
 main:
-        push    r12                     ; save callee-save registers
+        push    r12                     ; 调用者保存寄存器 
         push    r13
         push    r14
-        ; By pushing 3 registers our stack is already aligned for calls
+        ; 通过压入三个寄存器的值, 栈已经对齐 
 
-        cmp     rdi, 3                  ; must have exactly two arguments
+        cmp     rdi, 3                  ; 必须有且仅有 2 个参数
         jne     error1
 
         mov     r12, rsi                ; argv
 
-; We will use ecx to count down form the exponent to zero, esi to hold the
-; value of the base, and eax to hold the running product.
+        ; 我们将使用 ecx 作为指数的计数器, 直至 ecx 减到 0。
+        ; 使用 esi 来保存基数, 使用 eax 保存乘积。
 
         mov     rdi, [r12+16]           ; argv[2]
         call    atoi                    ; y in eax
-        cmp     eax, 0                  ; disallow negative exponents
+        cmp     eax, 0                  ; 不允许负指数 
         jl      error2
         mov     r13d, eax               ; y in r13d
 
@@ -685,11 +694,11 @@ main:
         call    atoi                    ; x in eax
         mov     r14d, eax               ; x in r14d
 
-        mov     eax, 1                  ; start with answer = 1
+        mov     eax, 1                  ; 初始结果 start with answer = 1
 check:
-        test    r13d, r13d              ; we're counting y downto 0
+        test    r13d, r13d              ; 递减 y 直至 0
         jz      gotit                   ; done
-        imul    eax, r14d               ; multiply in another x
+        imul    eax, r14d               ; 再乘上一个 x
         dec     r13d
         jmp     check
 gotit:                                  ; print report on success
@@ -734,33 +743,33 @@ Requires exactly two arguments
 
 
 
-## 浮点指令
+## 浮点数指令
 
-浮点参数进入 xmm 寄存器。这是一个简单的函数,用于对双精度数组中的值求和：
+浮点数参数保存在 xmm 寄存器中。下面是一个用来计算存放在数组中的浮点数的和的简单的函数：
 
-总和
+`sum.asm`
 
 ```asm
 ; -------------------------------------------------- ---------------------------
-; 一个64位函数,该函数返回浮点中的元素之和
-; 数组。该函数具有原型：
+; 一个64位程序,该函数返回浮点数数组元素之和
+; 函数声明如下：
 ;
-; double sum(double []数组,uint64_t长度)
+; double sum(double []array,uint64_t length)
 ; -------------------------------------------------- ---------------------------
 
         global  sum
         section .text
 sum:
-        xorpd   xmm0, xmm0              ; 将sum初始化为0
-        cmp     rsi, 0                  ; special case for length = 0
+        xorpd   xmm0, xmm0              ; 初始化累加和为 0
+        cmp     rsi, 0                  ; 考虑数组长度为 0 的特殊情形 
         je      done
 next:
-        addsd   xmm0, [rdi]             ; 加当前数组元素
-        add     rdi, 8                  ; 移至下一个数组元素
-        dec     rsi                     ; 递减
-        jnz     next                    ; if not done counting, continue
+        addsd   xmm0, [rdi]             ; 累加当前数组元素的值 
+        add     rdi, 8                  ; 指向下一个数组元素
+        dec     rsi                     ; 计数器递减
+        jnz     next                    ; 如果计数器未归0，则继续累加 
 done:
-        ret                             ; 返回值已经在xmm0中
+        ret                             ; 返回保存在 xmm0 寄存器中的值 
 ```
 
 请注意,浮点指令具有`sd`后缀;这是最常见的一种,但稍后我们会再看到其他一些。这是一个调用它的 C 程序：
@@ -801,16 +810,15 @@ $ nasm -felf64 sum.asm && gcc sum.o callsum.c && ./a.out
 
 ## 数据段
 
-在大多数操作系统上,文本部分是只读的,因此您可能会发现需要数据部分。在大多数操作系统上,data 部分仅用于初始化数据,而您有一个特殊的.bss 部分用于未初始化数据。这是一个对命令行参数取平均值的程序,该参数应为整数,并将结果显示为浮点数。
+在大多数操作系统上,.data 数据段是只读的,所以你需要使用数据段。.data 部分仅仅用来初始化数据，而您还可以发现有一个特殊的.bss 的段，是用来存放未初始化过的数据的下面是一个程序用来计算通过命令行参数传递的整数的平均值，并且以浮点数输出结果的程序。
 
 `average.asm`
 
 ```asm
 ; -------------------------------------------------- ---------------------------
-; 64位程序,将其所有命令行参数都视为整数和
-; 将其平均值显示为浮点数。该程序使用数据
-; 存储中间结果的部分,不是必须要存储的,而仅仅是
-; 说明如何使用数据段。
+; 一个把参数当做整数处理, 并且以浮点数形式输出他们平均值的 64 位程序。
+; 这个程序将使用一个数据段来保存中间结果。
+; 这不是必须的, 但是在此我们想展示数据段是如何使用的。
 ; -------------------------------------------------- ---------------------------
 
         global   main
@@ -822,27 +830,27 @@ $ nasm -felf64 sum.asm && gcc sum.o callsum.c && ./a.out
 main:
         dec      rdi              ; argc-1,因为我们不计算程序名称
         jz       nothingToAverage
-        mov      [count], rdi     ; 保存真实参数的数量
+        mov      [count], rdi     ; 保存浮点数参数的个数 
 accumulate:
-        push     rdi              ; save register across call to atoi
+        push     rdi              ; 保存调用 atoi 需要使用的寄存器 
         push     rsi
         mov      rdi, [rsi+rdi*8] ; argv[rdi]
-        call     atoi             ; now rax has the int value of arg
-        pop      rsi              ; restore registers after atoi call
+        call     atoi             ; 现在 rax 里保存着 arg 的整数值 
+        pop      rsi              ; 调用完 atoi 函数后恢复寄存器 
         pop      rdi
-        add      [sum], rax       ; accumulate sum as we go
-        dec      rdi              ; count down
-        jnz      accumulate       ; more arguments?
+        add      [sum], rax       ; 继续累加 
+        dec      rdi              ; 递减 
+        jnz      accumulate       ; 还有参数吗?
 average:
         cvtsi2sd xmm0, [sum]
         cvtsi2sd xmm1, [count]
-        divsd    xmm0, xmm1       ; xmm0 is sum/count
-        mov      rdi, format      ; 1st arg to printf
-        mov      rax, 1           ; printf is varargs, there is 1 non-int argument
+        divsd    xmm0, xmm1       ; xmm0 现在值为 sum/count
+        mov      rdi, format      ; printf 的第一个参数 [注: 输出格式]
+        mov      rax, 1           ; printf 是多参数的, 含有一个不是整数的参数 
 
-        sub      rsp, 8           ; align stack pointer
+        sub      rsp, 8           ; 对齐栈指针 
         call     printf           ; printf(format, sum/count)
-        add      rsp, 8           ; restore stack pointer
+        add      rsp, 8           ; 恢复栈指针 
 
         ret
 
@@ -879,13 +887,13 @@ There are no command line arguments to average
 
 ## 递归
 
-也许令人惊讶的是,实现递归功能并没有什么不同寻常的。您只需要像往常一样小心保存寄存器。在递归调用周围推动和弹出是一种典型的策略。
+也许令人惊讶的是,实现递归功能并没有什么不同寻常的。您只需要像往常一样小心保存寄存器的状态即可。在递归调用周围推动和弹出是一种典型的策略。
 
 `factorial.asm`
 
 ```asm
 ; ----------------------------------------------------------------------------
-; 递归函数的实现：
+; 一种递归函数的实现：
 ;
 ;   uint64_t factorial(uint64_t n) {
 ;       return (n <= 1) ? 1 : n * factorial(n-1);
@@ -897,13 +905,13 @@ There are no command line arguments to average
         section .text
 factorial:
         cmp     rdi, 1                  ; n <= 1?
-        jnbe    L1                      ; if not, go do a recursive call
-        mov     rax, 1                  ; otherwise return 1
+        jnbe    L1                      ; 如果不是, 进行递归调用 
+        mov     rax, 1                  ; 否则, 返回 1
         ret
 L1:
-        push    rdi                     ; 将n保存在堆栈上 (也对齐 %rsp!)
+        push    rdi                     ; 将n保存在堆栈上 (同时对齐 %rsp!)
         dec     rdi                     ; n-1
-        call    factorial               ; factorial(n-1), 结果保存到 %rax
+        call    factorial               ; factorial(n-1), 返回值保保存到 %rax
         pop     rdi                     ; 恢复 n
         imul    rax, rdi                ; n * factorial(n-1), 保存到 %rax
         ret
@@ -915,7 +923,7 @@ L1:
 
 ```c
 /**
- *一个说明调用其他地方定义的阶乘函数的应用程序。
+ *这是一个调用外部定义的阶乘函数的程序。
  */
 
 #include <stdio.h>
@@ -1077,7 +1085,7 @@ TODO
 
 首先,请阅读[Eli Bendersky 的文章,](http://eli.thegreenplace.net/2011/09/06/stack-frame-layout-on-x86-64/) 该概述比我的简短笔记更完整。
 
-调用函数时,调用者将首先将参数放入正确的寄存器中,然后发出`call`指令。调用之前,超出寄存器覆盖范围的其他参数将被压入堆栈。调用指令将返回地址放在堆栈的顶部。所以如果你有功能
+调用函数时,调用者将首先将参数存入正确的寄存器中，然后发出`call`指令。调用之前,超出寄存器覆盖范围的其他参数将被推入栈中。所调用的指令会把返回地址存入栈顶。所以如果有以下的函数：
 
 ```
 int64_t example(int64_t x, int64_t y) {
@@ -1087,9 +1095,9 @@ int64_t example(int64_t x, int64_t y) {
 }
 ```
 
-然后在进入函数时,x 将在 edi 中,y 将在 esi 中,并且返回地址将在堆栈的顶部。我们可以在哪里放置局部变量？一个简单的选择是在堆栈本身上,但是如果您有足够的寄存器,请使用它们。
+在函数的入口，x 将存在 edi 中，y 将存在 esi 中，返回地址将在堆栈的顶部。局部变量会被存到哪里？无论是否有足够的寄存器，一种简单的选择就是存入函数自己的栈中。
 
-如果在运行符合标准 ABI 的计算机上运行,则可以将 rsp 保留在原来的位置,并直接从 rsp 访问"额外参数"和局部变量,例如：
+如果程序运行在一个实现了 ABI 标准的机器上，你可以在 rsp 保持不变的情况下获取无法在寄存器中保存的参数值和局部变量值，例如：
 
 ```shell
                 +----------+
@@ -1108,7 +1116,7 @@ int64_t example(int64_t x, int64_t y) {
                 +----------+
 ```
 
-因此,我们的函数如下所示：
+因此，我们的函数看上去是这个样子的：
 
 ```asm
         global  example
@@ -1121,9 +1129,9 @@ example:
         ret
 ```
 
-如果我们的函数要进行另一个调用,则您必须调整 rsp 才能摆脱干扰。
+如果被调用的函数需要调用其他函数，你就需要调整 rsp 的值来得到正确的返回地址。
 
-在 Windows 上,您不能使用此方案,因为如果发生中断,则堆栈指针上方的所有内容都会被粘贴。在大多数其他操作系统上不会发生这种情况,因为在堆栈指针后面有一个 128 字节的"红色区域",可以避免这些情况。在这种情况下,您可以立即在堆栈上腾出空间：
+在 Windows 上，您不能使用此方案，因为当中断发生时，栈指针上方的所有内容都会被抹去。而在其他大多数操作系统中，不会发生这种情况，因为在栈指针后面，有一个 128 字节的"红色区域”来保护栈指针的安全。在这种情况下，您可以立即在栈上腾出空间：
 
 ```gas
 例：
@@ -1150,7 +1158,7 @@ example:
 
 ```
 
-现在是这里的功能。请注意,我们必须记住在返回之前要替换堆栈指针！
+现在是这里的功能。请注意,我们必须记住在返回之前要替换栈指针！
 
 ```asm
         global  example
