@@ -5,6 +5,8 @@
 英文原文链接：http://cs.lmu.edu/~ray/notes/nasmtutorial/
 
 > NASM 是一个绝赞的汇编器。现在让我们通过一些例子来学习 NASM。 然而这里的笔记仅仅只是蜻蜓点水般地涉及了一些皮毛,所以当你看完这个页面后,你需要查看 [官方的 NASM 文档 ](http://www.nasm.us/doc/)。
+>
+> 因原文写的时间应该比较早，翻译该文章是在2020年2月2日，一些链接已经不能再打开，有的示例代码在我的MAC OSX Catalina 10.15.3上也无法正常编译通过，笔者上述问题进行了修正（Linux下未进行验证）。
 
 ![img](https://raw.githubusercontent.com/zhangjunlei26/NASM-Tutorial-CN/master/assets/nasm-logo.png)
 
@@ -427,7 +429,7 @@ Hola, mundo
 
 我们怎么知道`puts`的参数放在`RDI`中？答：有多个参数调用约定。
 
-当你为 C library集成的 64 位 Linux 编写代码时,必须遵循[《AMD64 ABI Reference》](http://www.x86-64.org/documentation/abi.pdf)中说明的调用约定 。您也可以从[Wikipedia](http://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_Calling_Conventions)获这些信息 。在这里列出最重要的几点：
+当你为 C library集成的 64 位 Linux 编写代码时,必须遵循[《AMD64 ABI Reference》](https://raw.githubusercontent.com/zhangjunlei26/NASM-Tutorial-CN/master/x86-64-psABI-1.0.pdf)中说明的调用约定 。您也可以从[Wikipedia](http://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_Calling_Conventions)获这些信息 。在这里列出最重要的几点：
 
 - 传递参数时，按照从左到右的顺序，将尽可能多的参数依次保存在寄存器中。存放位置的寄存器顺序是确定的：
   - 对于整数和指针：`rdi`,`rsi`,`rdx`,`rcx`,`r8`,`r9`。
