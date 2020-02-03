@@ -1,6 +1,6 @@
-# NASM 教程
+# Nasm指南中文 (NASM Tutorial)
 
-中文翻译版 NASM Tutorial
+
 
 英文原文链接：http://cs.lmu.edu/~ray/notes/nasmtutorial/
 
@@ -48,7 +48,7 @@ _start:
           syscall                           ; 调用操作系统进行写入
           
           ; exit(0)
-          mov       rax,60                 ; syscall退出
+          mov       rax,60                 ; 60号系统调用是退出
           xor       rdi,rdi                ; 退出代码 0
           syscall                           ; 调用操作系统退出
 
@@ -73,29 +73,30 @@ Hello,World
 ; 仅使用syscall将" Hello,World"写入控制台。仅在64位macOS上运行。
 ; 编译汇编代码并运行：
 ;
-; nasm -fmacho64 hello.asm && ld hello.o && ./a.out
+; nasm -fmacho64 hello.asm && gcc hello.o && ./a.out
 ; ----------------------------------------------------------------------------------------
 
-          global _start
+          global _main
 
           section .text
-start: 
+_main:
           ; write(1, message, 13)
-          mov rax,0x02000004   ; syscall
-          mov rdi,1         ; 文件句柄1是stdout
-          mov rsi,message   ; 要输出的字符串地址
-          mov rdx,13        ; 字节数
-          syscall           ; 调用操作系统进行写入
+          mov rax,0x02000004      ; 系统调用
+          mov rdi,1               ; 文件句柄号1是stdout
+          mov rsi,message         ; 要输出的字符串地址
+          mov rdx,14              ; 字节数
+          syscall                 ; 调用操作系统进行写入
           ; exit(0)
-          mov rax,0x02000001; syscall退出
-          xor rdi,rdi       ; 退出代码0
-          syscall           ; 调用操作系统退出
+          mov rax,0x02000001      ; syscall退出
+          xor rdi,rdi             ; 退出代码0
+          syscall                 ; 调用操作系统退出
 
           section   .data
-message:  db  "Hello, World",10 ;注意最后的换行符
+message:  db  "Hello, World",10,0   ; 注意最后的换行符
+
 ```
 ```shell
-$ nasm -fmacho64 hello.asm && ld hello.o && ./a.out
+$ nasm -fmacho64 hello.asm && gcc hello.o && ./a.out
 Hello, World
 ```
 > **练习**：确定两个程序之间的差异。
@@ -137,33 +138,33 @@ NASM 是一个很棒的汇编器,但是汇编语言很复杂。您不仅需要�
 
 在本教程中,我们只关心整数寄存器和 xmm 寄存器。您应该已经知道什么是寄存器,但是这里是一个快速的回顾。16 个整数寄存器为 64 位宽,称为：
 
-```
+```asm
 R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15
 RAX RCX RDX RBX RSP RBP RSI RDI
 ```
 
 (请注意,其中的最后 8 个寄存器具有备用名称)您可以将每个寄存器的最低 32 位视为寄存器本身,但可以使用以下名称：
 
-```
+```asm
 R0D R1D R2D R3D R4D R5D R6D R7D R8D R9D R10D R11D R12D R13D R14D R15D
 EAX ECX EDX EBX ESP EBP ESI EDI
 ```
 
-您可以使用以下名称将每个寄存器的最低 16 位视为一个寄存器本身：
+您可以使用以下名称将每个寄存器的最低 16 位看作一个寄存器：
 
-```
+```asm
 R0W R1W R2W R3W R4W R5W R6W R7W R8W R9W R10W R11W R12W R13W R14W R15W
 AX CX DX BX SP BP SI DI
 ```
 
-您可以使用以下名称将每个寄存器的最低 8 位视为一个寄存器本身：
+您可以使用以下名称将每个寄存器的最低 8 位看作一个寄存器：
 
-```
+```asm
 R0B R1B R2B R3B R4B R5B R6B R7B R8B R9B R10B R11B R12B R13B R14B R15B
 AL CL DL BL SPL BPL SIL DIL
 ```
 
-由于历史原因,`R0`..的第 15 至 8 位`R3`被命名为：
+由于历史原因，`R0...R3`的第 15 至 8 位被命名为：
 
 ```
 AH CH DH BH
@@ -278,39 +279,47 @@ realarray:      resq    10              ; 十个实数的数组
 ; nasm -fmacho64 triangle.asm && gcc hola.o && ./a.out
 ; ----------------------------------------------------------------------------------------
 
-          global _start
-          section .text
-start:
-          mov rdx, output     ; rdx保存要写入的下一个字节的地址
-          mov r8, 1           ; 初始线长
-          mov r9, 0           ; 到目前为止在线上写的星数
-line:
-          mov byte [rdx], '*' ; 写一个星形符号
-          inc rdx             ; 前进指向下一个要写入的单元格的指针
-          inc r9              ; 到目前为止,"计数"数字已在线
-          cmp r9,r8           ; 我们达到这条线的星数了吗？
-          jne line            ; 还没有,继续写这行
-lineDone:
-          mov byte [rdx],10   ; 写一个新行char
-          inc rdx             ; 并将指针移到下一个字符的位置
-          inc r8              ; 下一行将是一个字符长
-          mov r9,0            ; 重置写在此行上的星星数
-          cmp r8,maxlines     ; 等等,我们已经完成了最后一行吗？
-          jng line            ; 如果没有,开始写这行
-done:
-          mov rax,0x02000004  ; syscall
-          mov rdi,1           ; 文件句柄1是stdout
-          mov rsi,output      ; 要输出的字符串地址
-          mov rdx,dataSize    ; 字节数
-          syscall             ; 调用操作系统进行写入
-          mov rax,0x02000001  ; syscall退出
-          xor rdi,rdi         ; 退出代码0
-          syscall             ; 调用操作系统退出
+          global    _main
+          default  rel
 
-          section .bss
-maxlines equ 8
-dataSize equ 44
-output: resb dataSize
+          section   .text
+_main:
+          push      rbx                     ; OSX必须，保存栈，Linux下删除该行
+          mov       rdx, output             ; rdx holds address of next byte to write
+          mov       r8, 1                   ; initial line length
+          mov       r9, 0                   ; number of stars written on line so far
+line:
+          mov       byte [rdx], '*'         ; write single star
+          inc       rdx                     ; advance pointer to next cell to write
+          inc       r9                      ; "count" number so far on line
+          cmp       r9, r8                  ; did we reach the number of stars for this line?
+          jne       line                    ; not yet, keep writing on this line
+lineDone:
+          mov       byte [rdx], 10          ; write a new line char
+          inc       rdx                     ; and move pointer to where next char goes
+          inc       r8                      ; next line will be one char longer
+          mov       r9, 0                   ; reset count of stars written on this line
+          cmp       r8, maxlines            ; wait, did we already finish the last line?
+          jng       line                    ; if not, begin writing this line
+done:
+          mov       rax, 0x02000004         ; system call for write
+          mov       rdi, 1                  ; file handle 1 is stdout
+          mov       rsi, output             ; address of string to output
+          mov       rdx, dataSize           ; number of bytes
+          syscall                           ; invoke operating system to do the write
+
+          ;exit(0)
+          pop rbx                           ; OSX必须，弹出开头保存的栈，Linux下删除该行
+          ;mov       rax, 0x02000001         ; system call for exit
+          ;xor       rdi, rdi                ; exit code 0
+          ;syscall                           ; invoke operating system to exit
+          ret
+
+          section   .bss
+maxlines  equ       8
+dataSize  equ       44
+output:   resb      dataSize
+
 
 ```
 
