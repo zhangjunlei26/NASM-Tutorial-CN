@@ -429,7 +429,11 @@ Hola, mundo
 
 我们怎么知道`puts`的参数放在`RDI`中？答：有多个参数调用约定。
 
-当你为 C library集成的 64 位 Linux 编写代码时,必须遵循[《AMD64 ABI Reference》](https://raw.githubusercontent.com/zhangjunlei26/NASM-Tutorial-CN/master/x86-64-psABI-1.0.pdf)中说明的调用约定 。您也可以从[Wikipedia](http://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_Calling_Conventions)获这些信息 。在这里列出最重要的几点：
+当你为 C library集成的 64 位 Linux 编写代码时，必须遵循[《AMD64 ABI Reference》]([here](https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-1.0.pdf))中说明的调用约定 。您也可以从[Wikipedia](http://en.wikipedia.org/wiki/X86_calling_conventions#x86-64_Calling_Conventions)获这些信息 。
+
+> 注：` x86-64 System V ABI`下载地址曾是`http://x86-64.org/documentation/abi.pdf`，现在 System V x86-64 psABI 已迁移到GitHub上维护，最新版本可以查看 [J.J. Lu的Github Wiki](https://github.com/hjl-tools/x86-psABI/wiki/X86-psABI)。
+
+在这里列出最重要的几点：
 
 - 传递参数时，按照从左到右的顺序，将尽可能多的参数依次保存在寄存器中。存放位置的寄存器顺序是确定的：
   - 对于整数和指针：`rdi`,`rsi`,`rdx`,`rcx`,`r8`,`r9`。
