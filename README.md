@@ -73,28 +73,45 @@ Hello,World
 ```asm
 ; ----------------------------------------------------------------------------------------
 ; 仅使用syscall将" Hello,World"写入控制台。仅在64位macOS上运行。
-; 编译汇编代码并运行：
 ;
-; nasm -fmacho64 hello.asm && gcc hello.o && ./a.out
+; 显示nasm支持的输出格式
+; nasm -hf  
+;
+; 编译汇编代码并运行：
+; nasm -fmacho64 hello.asm && ld -o hello -e _main -lSystem hello.o && ./hello
+; 也可以如下方式运行：
+; nasm -fmacho64 hello.asm && gcc -o hello hello.o && ./hello
+;
 ; ----------------------------------------------------------------------------------------
 
-          global _main
+section .data
+  msg: db "Hello, World!",10,0   ; 注意最后的换行符
+  len: equ $-msg
 
-          section .text
+
+section .text
+global _main
+
+; kernel:
+;     syscall
+;     ret
+
 _main:
-          ; write(1, message, 13)
-          mov rax,0x02000004      ; 系统调用
-          mov rdi,1               ; 文件句柄号1是stdout
-          mov rsi,message         ; 要输出的字符串地址
-          mov rdx,14              ; 字节数
-          syscall                 ; 调用操作系统进行写入
-          ; exit(0)
-          mov rax,0x02000001      ; syscall退出
-          xor rdi,rdi             ; 退出代码0
-          syscall                 ; 调用操作系统退出
+    ; write(1, msg, 13)
+    mov rax,0x02000004      ; 系统调用
+    mov rdi,1               ; 文件句柄号1是stdout
+    mov rsi,msg             ; 要输出的字符串地址
+    mov rdx,len             ; 15字节数
+    ; exit(0)
+    syscall                 ; 调用操作系统进行写入
+    ; call kernel
 
-          section   .data
-message:  db  "Hello, World",10,0   ; 注意最后的换行符
+    mov rax,0x02000001      ; syscall退出
+    xor rdi,rdi             ; 退出代码0
+    syscall                 ; 调用操作系统退出
+    ; call kernel
+
+
 
 ```
 ```shell
