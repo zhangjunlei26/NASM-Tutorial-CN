@@ -6,7 +6,7 @@
 
 > NASM 是一个绝赞的汇编器。现在让我们通过一些例子来学习 NASM。 然而这里的笔记仅仅只是蜻蜓点水般地涉及了一些皮毛,所以当你看完这个页面后,你需要查看 [官方的 NASM 文档 ](http://www.nasm.us/doc/)。
 >
-> 因原文写的时间应该比较早，翻译该文章是在2020年2月2日，一些链接已经不能再打开，有的示例代码在我的MAC OSX Catalina 10.15.3上也无法正常编译通过，笔者上述问题进行了修正（Linux下未进行验证）。
+> 因原文写的时间应该比较早，翻译该文章是在2020年2月2日，原文中的一些链接已经不能再打开，具有的示例代码在我的MAC OSX Catalina 10.15.3上也无法正常编译通过，笔者针对上述问题进行了修正，但编译问题仅在MAC OSX下进行了难，Linux下未进行验证。
 
 ![img](https://raw.githubusercontent.com/zhangjunlei26/NASM-Tutorial-CN/master/assets/nasm-logo.png)
 
